@@ -1,4 +1,24 @@
-# App
+# Angular + SSR + ngx-translate template
+
+### I18nModule
+
+Provides all the ngx-translate initialisation logic, with ssr and non-srr loaders, transfer-state implementation and initial language initialisation.
+
+### I18nInterceptor
+
+Applies the `accept-language` header to any requests and removes translation files caching.
+
+### I18nRootGuard
+
+Performs the redirect from base url to current language url. In SSR it's working as 302 no-cache redirect.
+
+### I18nGuard
+
+Sets the language from route-parameter.
+
+### I18nPipe
+
+Append the language prefix to path.
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 10.0.3.
 
