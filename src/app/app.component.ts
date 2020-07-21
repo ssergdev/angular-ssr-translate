@@ -16,9 +16,14 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class AppComponent {
     constructor(private router: Router, public translateService: TranslateService) {}
+
     setLang(lang: string) {
         const path = this.router.url.split('/').slice(2).join('/');
-        const new_path = path ? `${lang}/${path}` : lang;
-        window.location.replace(new_path);
+        const newPath = path ? `${lang}/${path}` : lang;
+
+        this.translateService
+            .use(lang)
+            .toPromise()
+            .then(() => this.router.navigate([newPath]));
     }
 }
