@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { TranslateService, LangChangeEvent } from '@ngx-translate/core';
 
 @Pipe({
-    name: 'i18n',
+    name: 'localize',
     pure: false,
 })
 export class I18nPipe implements PipeTransform, OnDestroy {

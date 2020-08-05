@@ -5,18 +5,20 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { I18nModule } from './core/i18n/i18n.module';
 import { BlankComponent } from './blank.component';
+import { CookieService, CookieModule } from '@gorniv/ngx-universal';
 
 @NgModule({
     declarations: [AppComponent, BlankComponent],
     imports: [
         BrowserModule.withServerTransition({ appId: 'serverApp' }),
         AppRoutingModule,
-        I18nModule.forRoot([
-            { name: 'English', code: 'en' },
-            { name: 'Russian', code: 'ru' },
-        ]),
+        CookieModule.forRoot(),
+        I18nModule.forRoot({
+            locales: ['en', 'ru'],
+            defaultLocale: 'en',
+        }),
     ],
-    providers: [],
+    providers: [CookieService],
     bootstrap: [AppComponent],
 })
 export class AppModule {}
