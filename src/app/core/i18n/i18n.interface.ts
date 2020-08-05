@@ -1,8 +1,7 @@
 import { InjectionToken } from '@angular/core';
 
-export const LANGUAGES = new InjectionToken<Lang[]>('LANGUAGES');
-
-export interface Lang {
-    name: string;
-    code: string;
+export interface I18nConfig {
+    locales: string[];
+    defaultLocale: string;
 }
+export const I18N_CONFIG = new InjectionToken<I18nConfig>('I18N_CONFIG');

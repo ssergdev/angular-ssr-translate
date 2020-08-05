@@ -1,20 +1,22 @@
 import { Inject, ModuleWithProviders, NgModule, Optional, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import {
+    TranslateLoader,
+    TranslateModule,
+    TranslateService,
+    TranslateCompiler,
+} from '@ngx-translate/core';
 import { BrowserTransferStateModule, TransferState } from '@angular/platform-browser';
 import { isPlatformBrowser } from '@angular/common';
 import { REQUEST } from '@nguniversal/express-engine/tokens';
 import { Request } from 'express';
-import {
-    TranslateCacheModule,
-    TranslateCacheService,
-    TranslateCacheSettings,
-} from 'ngx-translate-cache';
+import { pick } from 'accept-language-parser';
 
+import { I18nCacheService } from './i18n.cache';
 import { translateLoaderFactory } from './i18n.loaders';
 import { I18nInterceptor } from './i18n.inteceptors';
-import { I18nRootGuard, I18nGuard } from './i18n.guards';
-import { Lang, LANGUAGES } from './i18n.interface';
+import { I18nGuard } from './i18n.guards';
+import { I18nConfig, I18N_CONFIG } from './i18n.interface';
 
 @NgModule({
     imports: [
@@ -27,18 +29,10 @@ import { Lang, LANGUAGES } from './i18n.interface';
                 deps: [HttpClient, TransferState, PLATFORM_ID],
             },
         }),
-        TranslateCacheModule.forRoot({
-            cacheService: {
-                provide: TranslateCacheService,
-                useFactory: translateCacheFactory,
-                deps: [TranslateService, TranslateCacheSettings],
-            },
-            cacheMechanism: 'Cookie',
-        }),
     ],
     providers: [
-        I18nRootGuard,
         I18nGuard,
+        I18nCacheService,
         { provide: HTTP_INTERCEPTORS, useClass: I18nInterceptor, multi: true },
     ],
     exports: [TranslateModule],
@@ -46,56 +40,27 @@ import { Lang, LANGUAGES } from './i18n.interface';
 export class I18nModule {
     constructor(
         translate: TranslateService,
-        translateCacheService: TranslateCacheService,
-        @Optional() @Inject(REQUEST) private req: Request,
-        @Inject(PLATFORM_ID) private platform: any,
-        @Inject(LANGUAGES) private languages: Lang[]
+        translateCache: I18nCacheService,
+        @Optional() @Inject(REQUEST) req: Request,
+        @Inject(PLATFORM_ID) platform: any,
+        @Inject(I18N_CONFIG) config: I18nConfig
     ) {
-        const langs = languages.map((i) => i.code);
+        const locales = config.locales;
+        const defaultLocale = config.defaultLocale;
 
-        if (isPlatformBrowser(platform)) {
-            translateCacheService.init();
-        }
+        const lang = isPlatformBrowser(platform)
+            ? translateCache.getCachedLanguage() || translate.getBrowserLang()
+            : translateCache.getCachedLanguage() ||
+              (req && req.headers ? pick(locales, req.headers['accept-language']) : null);
 
-        translate.addLangs(langs);
-
-        let lang = isPlatformBrowser(platform)
-            ? translateCacheService.getCachedLanguage() || translate.getBrowserLang()
-            : getLanguageFromRequest(req, langs);
-        lang = langs.includes(lang) ? lang : langs[0];
-
-        translate.use(lang);
+        translate.addLangs(locales);
+        translate.setDefaultLang(defaultLocale);
+        translate.use(lang && locales.includes(lang) ? lang : defaultLocale);
     }
-    static forRoot(languages: Lang[] = []): ModuleWithProviders<I18nModule> {
+    static forRoot(config: I18nConfig): ModuleWithProviders<I18nModule> {
         return {
             ngModule: I18nModule,
-            providers: [{ provide: LANGUAGES, useValue: languages }],
+            providers: [{ provide: I18N_CONFIG, useValue: config }],
         };
     }
-}
-
-export function getLanguageFromRequest(req: any, langs: string[]): string {
-    let lang: string;
-    if (req) {
-        // Get language from cookies
-        if (req.cookies) {
-            lang = req.cookies.lang;
-        }
-
-        // Get the first accepted language
-        if (lang == null && req.headers && req.headers['accept-language']) {
-            const headerLang = req.headers['accept-language'].split(',')[0].trim();
-            if (headerLang.length > 1) {
-                lang = headerLang.split('-')[0];
-            }
-        }
-    }
-    return lang;
-}
-
-export function translateCacheFactory(
-    translateService: TranslateService,
-    translateCacheSettings: TranslateCacheSettings
-) {
-    return new TranslateCacheService(translateService, translateCacheSettings);
 }

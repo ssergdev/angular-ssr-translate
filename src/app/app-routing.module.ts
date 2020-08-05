@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { I18nRootGuard, I18nGuard } from '@app/core/i18n/i18n.guards';
+import { I18nGuard } from '@app/core/i18n/i18n.guards';
 import { BlankComponent } from '@app/blank.component';
 
 const routes: Routes = [
-    { path: '', component: BlankComponent, canActivate: [I18nRootGuard] },
+    { path: '', component: BlankComponent, canActivate: [I18nGuard] },
 
     { path: '404', component: BlankComponent },
     {
